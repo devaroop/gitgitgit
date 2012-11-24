@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; 
+             margin: 0; 
+             padding: 0;
+           }
+      div.const_details{
+          float:right;
+      }
+      button#clearmap {float:right}
+      #map_canvas { 
+          width: 992px; 
+          height: 400px;
+          float: left;
+          border-radius: 5px;
+          border: 4px solid pink;
+      }
+      div.text{
+          float:left;
+          width:230px;
+          border-right:thick double pink;
+      }
+      div.main_container{
+          width:1000px;
+          margin: 0 auto;
+      }
+
+      div.render_area{
+          padding: 10px;
+          border: 2px solid gray;
+          width:100%;
+          height: 100%;
+          border-radius: 10px;
+          overflow:hidden;
+      }
+      div.heading{
+          margin: 0 auto;
+          font-size: 40px;
+          font-weight: 500;
+          float:left;
+      }
+      div.details{
+          float:left;
+          padding-left: 20px;
+      }
+      div#place_details{
+          display:none;
+      }
+    </style>
+    <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJPTYu32xrtJ5syyZPKCQB0TBiWbxlKvQ&sensor=true"></script>
+    <script type="text/javascript">
+      var geocoder;
+      var map;
+      var initial_zoom_level = 15;
+      var zoom_on_place_select = 17;
+      var markersArray = [];
+      var center_latlng = new google.maps.LatLng(18.535891335866413, 73.89695584774017);
+      var constituency;
+      var constituency_coords = [
+          new google.maps.LatLng(18.541953903909725, 73.88380765914917),
+          new google.maps.LatLng(18.53194444778455, 73.88535261154175),
+          new google.maps.LatLng(18.530764432618344, 73.89766931533813),
+          new google.maps.LatLng(18.530764432618344, 73.89766931533813),
+          new google.maps.LatLng(18.530276148097787, 73.90981435775757),
+          new google.maps.LatLng(18.53226996777608, 73.91607999801636),
+          new google.maps.LatLng(18.539309185914778, 73.90470743179321),
+          new google.maps.LatLng(18.542686280115344, 73.8910174369812)
+      ];
+      
+      function initialize() {
+          geocoder = new google.maps.Geocoder();
+          var mapOptions = {
+              zoom: initial_zoom_level,
+              center: center_latlng,
+              mapTypeId: google.maps.MapTypeId.ROADMAP,
+              scrollwheel: false
+          }
+          map = new google.maps.Map(document.getElementById("map_canvas"), mapOptions);
+
+          constituency = new google.maps.Polygon({
+              paths: constituency_coords,
+              strokeColor: "#FF0000",
+              strokeOpacity: 0.4,
+              strokeWeight: 1,
+              fillColor: "#FF0000",
+              fillOpacity: 0.1
+          });
+
+          constituency.setMap(map);
+          google.maps.event.addListener(constituency, 'click', codeLatLng);
+      }
+
+      function codeAddress() {
+          var address = document.getElementById("address").value;
+          geocoder.geocode( { 'address': address}, function(results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  map.setZoom(zoom_on_place_select);
+                  map.setCenter(results[0].geometry.location);
+                  addMarker(results[0].geometry.location);
+                  fetch_details(address);
+              } else {
+                  alert("Geocode was not successful for the following reason: " + status);
+              }
+          });
+      }
+      
+      function addMarker(location) {
+          marker = new google.maps.Marker({
+              position: location,
+              map: map
+          });
+          markersArray.push(marker);
+      }
+
+      function deleteOverlays() {
+          if (markersArray) {
+              for (i in markersArray) {
+                  markersArray[i].setMap(null);
+              }
+              markersArray.length = 0;
+          }
+          map.setCenter(center_latlng);
+          map.setZoom(initial_zoom_level);
+          document.getElementById("place_details").style.display = 'none';
+      }
+
+      function fetch_details(address)
+      {
+          document.getElementById("area").innerHTML = address;
+          document.getElementById("place_details").style.display = 'block';
+      }
+
+      function codeLatLng(event) {
+          latlng = event.latLng;
+          geocoder.geocode({'latLng': latlng}, function(results, status) {
+              if (status == google.maps.GeocoderStatus.OK) {
+                  if (results[1]) {
+                      map.setZoom(zoom_on_place_select);
+                      map.setCenter(latlng);
+                      addMarker(latlng);
+                      fetch_details(results[1].formatted_address);
+                  }
+              } else {
+                  alert("Geocoder failed due to: " + status);
+              }
+          });
+      }
+
+    </script>
+  </head>
+
+  <body onload="initialize()">
+    <div class="main_container">
+      <div class="render_area">
+        <div class="heading">
+          Koregaon Park Constituency
+        </div>
+
+        <div class="const_details">
+          Collector: Mr. Kunal Murudkar<br/>
+          Dpt. Collector: Dr. Basant Rajan
+        </div>
+
+        <div id="map_canvas"></div>
+        <button id="clearmap" type="button" onclick="deleteOverlays();">Clear Map</button>
+        
+        <div class="text">
+          <h2>Area:</h2><p id="area">Select place on map OR</p>
+          <h2>Enter Area:</h2>
+          <input id="address" type="textbox" placeholder="Enter area here"/>
+          <input type="button" value="Find" onclick="codeAddress()"/>
+        </div>
+
+        <div id="place_details">
+          <div class="details">
+            <h2> Details </h2>
+            <p>Society Welfare: 1 Cr </p>
+            <p>Drainage: 2 Cr </p>
+            <p>Roads: 3 Cr </p>
+          </div>
+
+          <div class="details">
+            <h2>&nbsp;</h2>
+            <p>Safety: 1 Cr </p>
+            <p>Repairs: 2 Cr </p>
+            <p>Maintenance: 3 Cr </p>
+          </div>
+          
+          <div class="details">
+            <h2>&nbsp;</h2>
+            <p>Pipeline: 1 Cr </p>
+            <p>Water: 2 Cr </p>
+            <p>Security: 3 Cr </p>
+          </div>
+          
+          <div class="details">
+            <h2>&nbsp;</h2>
+            <p>Loss: 1 Cr </p>
+            <p>Salaries: 2 Cr </p>
+            <p>Wastages: 3 Cr </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </body>
+
+</html>
